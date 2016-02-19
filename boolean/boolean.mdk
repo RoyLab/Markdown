@@ -1,0 +1,47 @@
+Title         : Welcome
+Author        : You
+Logo          : True
+
+[TITLE]
+
+# Madoko 
+
+Madoko is a fast markdown processor for writing professional articles
+with a focus on simplicity and plain text readability.
+
+* Read the [reference manual].
+* Explore the upper-right toolbox menu to discover how Markdown works. 
+* `Alt-Q` reformats the current paragraph.
+
+Enjoy!
+
+[reference manual]: http://research.microsoft.com/en-us/um/people/daan/madoko/doc/reference.html  "Madoko refrence manual"
+
+# 预处理
+## Mesh的处理
+* 归一化坐标系，到0~1
+* 去掉多余的位数，保留18位，最小边长为0.25
+* 获取每个面，以及整个Mesh的bbox
+
+## CSG树的预处理
+* 应用De Morgan律
+
+
+# 八叉树构建
+* 获取八叉树bbox的大小，适当增长
+* 分割，碰撞检测，并记录混合子节点
+
+# 相交测试
+* 遍历所有的混合子节点
+* 如相交：分情况
+  * 点相交：直接无视，因为单独的点相交会产生non-manifold，非单独的点，一定会被再找到一次
+  * 线相交： 应该录入，但有一种情况除外，就是它是某个三角形边的一部分。这种情况下，有可能出现non-manifold；此外，还有可能出现同一个折痕被录入两次的情况。
+  * 面相交：直接记录，但不录入任何数据，因为面相交的边缘都是线段，这些线段一定会被记录下来。
+
+* 录入时，注意检查对应的位置有没有已经存在的顶点。为了可以检查闭环，每个顶点要存储一下连接了那些折痕。
+* 合并原则：每次相交测试，会有两个点，这两个点，可能是原生的，也可能是新生成的，但新生成的也可能会是重复的。如果发现重复，那么指向ID小的那个面对应的点。`这样的话点的指针结构会因此非常复杂`。
+
+## 指针结构
+
+
+存在一个点welding的过程，在三角化之前。
