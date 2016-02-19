@@ -1,21 +1,9 @@
-Title         : Welcome
-Author        : You
-Logo          : True
+Title         : Boolean 笔记
+Author        : 王睿 [reference manual]
+Logo          : TrueFalse
 
 [TITLE]
 
-# Madoko 
-
-Madoko is a fast markdown processor for writing professional articles
-with a focus on simplicity and plain text readability.
-
-* Read the [reference manual].
-* Explore the upper-right toolbox menu to discover how Markdown works. 
-* `Alt-Q` reformats the current paragraph.
-
-Enjoy!
-
-[reference manual]: http://research.microsoft.com/en-us/um/people/daan/madoko/doc/reference.html  "Madoko refrence manual"
 
 # 预处理
 ## Mesh的处理
@@ -34,14 +22,74 @@ Enjoy!
 # 相交测试
 * 遍历所有的混合子节点
 * 如相交：分情况
-  * 点相交：直接无视，因为单独的点相交会产生non-manifold，非单独的点，一定会被再找到一次
-  * 线相交： 应该录入，但有一种情况除外，就是它是某个三角形边的一部分。这种情况下，有可能出现non-manifold；此外，还有可能出现同一个折痕被录入两次的情况。
-  * 面相交：直接记录，但不录入任何数据，因为面相交的边缘都是线段，这些线段一定会被记录下来。
+  * 点相交：直接无视，因为单独的点相交会产生non-manifold，非单独的点，
+  一定会属于某一个折痕。
+  * 线相交： 应该录入，但有一种情况除外，就是它是某个三角形边的一部分。
+  这种情况下，有可能出现non-manifold；此外，还有可能出现同一个折痕被录入两次的情况。可以通过
+  测试share临边的两个三角形跟主三角形的位置的关系来判断。
+    * 1，0，这种情况下记录，并且在对应的位置上记录下共面的标记，如果某一个区域被这个标记包围，
+    说明这个区域应当被视为共面
+    * 1，1，不记录
+    * 1，-1，记录
+    
+  * 面相交：直接记录，但不录入任何数据，因为面相交的边缘都是线段，这些线段一
+  定会被记录下来。
+  * 这里存在一个On的标记，即某个点，无论第一类点还是生成点，如果在别的mesh上，则标一个On，很有用处。
+  这个标记必须是mesh内共享的，特指点标记和边标记
+  * 记录的分类体现了是否需要[tesselate]{ :red }这个问题
 
-* 录入时，注意检查对应的位置有没有已经存在的顶点。为了可以检查闭环，每个顶点要存储一下连接了那些折痕。
-* 合并原则：每次相交测试，会有两个点，这两个点，可能是原生的，也可能是新生成的，但新生成的也可能会是重复的。如果发现重复，那么指向ID小的那个面对应的点。`这样的话点的指针结构会因此非常复杂`。
+* 录入时，注意检查对应的位置有没有已经存在的顶点。为了可以检查闭环，每个顶点要存
+储一下连接了那些折痕。
+* 合并原则：每次相交测试，会有两个点，这两个点，可能是原生的，也可能是新
+成的，但新生成的也可能会是重复的。如果发现重复，那么指向ID小的那个面对应的点。
+* 新的looplet技术值得借鉴，但looplet并不需要在此刻添加。
 
 ## 指针结构
 
+我们需要一个两层结构
 
-存在一个点welding的过程，在三角化之前。
+* 首先是一个agency，用于被存储的位置指向它。
+* 然后是agency指向实体，这样可以用于合并agency。
+* 每次相交测试生成一个agency，如果存在不同的agency，则合并它们。
+
+# 染色
+## 初始化
+
+显然从某一个面开始染色，然后继续遍历。
+
+随机初始化一个点的完全向量。
+
+## 处理复杂面
+
+* 首先得到二级向量。
+* 过滤掉无用折痕。
+* 建立图，找寻第三类点
+* 从某一个点开始，染色图，这里的准确性跟On相关。
+* 添加looplet
+* 连接looplet，栅格化，convex化，三角化
+
+### 染色图问题： 
+
+* 必须存在上下文结构，在共享点的位置。非共享点的上下文本身存在。内点=单面，边点=双面，角点=所有面，给引用就可以了
+* 单面单投，多面，角度近的算。
+
+## 传递问题：
+
+* 向下传递——使用子集
+* 向上传递——使用边缘点
+
+## 选面问题
+
+* 主要是On的存在，如果全On，会出现多种可能。使用共面标记有助于判断共面。
+如果不是共面，就用其中一个边的构造面做测试。
+
+## looplet问题
+
+
+# Issue
+
+* 三角形构建可以只放在OctreeBuilding?
+* 由于实体点放在最终result mesh当中，所以要清理不用的点。
+
+
+[reference manual]: http://research.microsoft.com/en-us/um/people/daan/madoko/doc/reference.html  "Madoko refrence manual"
